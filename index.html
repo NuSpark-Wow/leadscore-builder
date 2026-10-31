@@ -97,6 +97,9 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
 .gdesc{font-size:.85rem;background:var(--bg);border-radius:6px;padding:8px 10px}
 .toggle{display:flex;gap:8px;align-items:flex-start;font-size:.85rem}
 .known{font-size:.82rem}
+.legend{display:flex;flex-direction:column;gap:3px}
+.legend span{display:block}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .example{font-size:.75rem;background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:2px 6px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
@@ -171,6 +174,11 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
           <label for="ftOn">Fast-track hand-raisers (demo, quote, consult) to sales when Fit ≥</label>
           <div style="display:flex;gap:8px;align-items:center"><input id="ftOn" type="checkbox" aria-label="Fast-track on"><input id="ftFit" type="number" min="0" max="10" step="0.5" aria-label="Fit minimum"></div>
         </div>
+        <h3 style="font-size:.92rem;margin-top:4px">Where each route goes in the CRM</h3>
+        <div class="muted small">Pick the CRM and the list, tag or pipeline stage for each route. Leads land there automatically with their score, source (UTM) and top reasons.</div>
+        <div class="thr" id="crmbox">
+          <label for="crmPick">CRM</label><select id="crmPick" style="width:230px"></select>
+        </div>
         <div class="muted small"><b>Sales:</b> goes to the CRM and a rep is alerted. <b>Nurture:</b> marketing follow-up until the score rises. <b>Hold:</b> below the nurture threshold, kept and recycled later. Any disqualifier routes straight to Disqualified.</div>
       </section>
 
@@ -185,9 +193,12 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
     <aside class="side">
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Test lead score</h2><span class="example" id="exampleTag">Example lead</span></div>
+        <div class="small muted">This is the lead's score from 1 to 10. It combines Fit, Engagement and Intent using your weights, then compares the result to your thresholds to decide where the lead goes.</div>
         <div class="score"><span class="big mono" id="final">–</span><span class="muted">/ 10</span><span id="route" class="chip hold">Hold</span></div>
         <div class="gwrap"><div class="gauge" id="gauge"></div><div class="gmark" id="gmark"></div></div>
         <div class="ticks"><span>1</span><span>5</span><span>10</span></div>
+        <div class="legend small"><span><i style="background:var(--hold)"></i>Hold: below <b id="lgN">4</b>, kept and recycled</span><span><i style="background:var(--nurture)"></i>Nurture: <b id="lgN2">4</b> to <b id="lgS">7</b>, marketing follow-up</span><span><i style="background:var(--sales)"></i>Sales: <b id="lgS2">7</b> and up, sent to the CRM</span><span><i style="background:var(--ink);width:3px"></i>The black line marks this lead</span></div>
+        <div class="small muted">Below the bar, each category shows its own 0–10 score. Top drivers list the answers adding the most to the final score.</div>
         <div class="bars" id="bars"></div>
         <div class="known muted" id="known"></div>
         <div><div class="small muted" style="font-weight:600">Top drivers</div><ol class="drivers" id="drivers"></ol></div>
@@ -318,7 +329,7 @@ function renderScore(){
   const s=model.thresholds.sales,n=model.thresholds.nurture;
   const pct=x=>((x-1)/9*100);
   $("gauge").innerHTML=`<span style="width:${pct(n)}%;background:var(--hold);opacity:.55"></span><span style="width:${pct(s)-pct(n)}%;background:var(--nurture);opacity:.7"></span><span style="flex:1;background:var(--sales);opacity:.8"></span>`;
-  $("gmark").style.left=pct(r.final)+"%";
+  $("gmark").style.left=pct(r.final)+"%";$("lgN").textContent=n;$("lgN2").textContent=n;$("lgS").textContent=s;$("lgS2").textContent=s;
   $("bars").innerHTML=GROUPS.map(g=>{const skip=!(Number(model.weights[g.id])>0);const v=r.gs[g.id];
     const label=skip?"Skipped":(v==null?"No data":v.toFixed(1));
     return `<div class="bar"><span>${g.name}</span><div class="track"><div class="fill" style="width:${skip||v==null?0:v*10}%"></div></div><span class="mono${skip||v==null?" muted":""}" style="${skip||v==null?"font-size:.68rem":""}">${label}</span></div>`}).join("");
@@ -381,19 +392,42 @@ function markLead(){$("exampleTag").textContent="Test lead"}
 function renderThresholds(){
   $("tSales").value=model.thresholds.sales;$("tNurture").value=model.thresholds.nurture;
   $("ftOn").checked=model.fastTrack.on;$("ftFit").value=model.fastTrack.fitMin;
+  renderCrm();
 }
 ["tSales","tNurture","ftFit"].forEach(id=>$(id).addEventListener("input",()=>{
   model.thresholds.sales=Number($("tSales").value)||7;model.thresholds.nurture=Number($("tNurture").value)||4;
   model.fastTrack.fitMin=Number($("ftFit").value)||0;renderScore()}));
+const CRMS=["HubSpot","Salesforce","Pipedrive","Zoho CRM","GoHighLevel","Other CRM"];
+const LISTS={sales:["Sales-ready leads","Pipeline: New opportunity","Assigned to rep – hot","Demo requests"],
+  nurture:["Nurture – by campaign","Nurture – by content (eBook, webinar)","Nurture – by industry","Newsletter list"],
+  hold:["Hold – recycle in 30 days","Hold – needs more data","Cold list"],
+  dq:["Disqualified","Do not contact","Competitors and vendors"]};
+const RNAME={sales:"Sales list",nurture:"Nurture list",hold:"Hold list",dq:"Disqualified list"};
+function renderCrm(){
+  model.lists=model.lists||{};
+  const box=$("crmbox");
+  box.innerHTML=`<label for="crmPick">CRM</label><select id="crmPick" style="width:230px">${CRMS.map(c=>`<option ${model.crm===c?"selected":""}>${c}</option>`).join("")}</select>`+
+    Object.keys(LISTS).map(k=>{const cur=model.lists[k]||LISTS[k][0];const custom=!LISTS[k].includes(cur);
+      return `<label for="l_${k}">${RNAME[k]}</label><div style="display:flex;flex-direction:column;gap:4px"><select id="l_${k}" style="width:230px">${LISTS[k].map(o=>`<option ${o===cur?"selected":""}>${esc(o)}</option>`).join("")}<option value="__c" ${custom?"selected":""}>Custom name…</option></select><input id="lc_${k}" type="text" placeholder="Type the list name" style="width:230px" value="${custom?esc(cur):""}" ${custom?"":"hidden"}></div>`}).join("");
+  if(!model.crm)model.crm=CRMS[0];
+  Object.keys(LISTS).forEach(k=>{if(!model.lists[k])model.lists[k]=LISTS[k][0]});
+  $("crmPick").addEventListener("change",e=>{model.crm=e.target.value;renderRules()});
+  Object.keys(LISTS).forEach(k=>{
+    $("l_"+k).addEventListener("change",e=>{const c=e.target.value==="__c";$("lc_"+k).hidden=!c;
+      if(c){$("lc_"+k).focus();model.lists[k]=$("lc_"+k).value||""}else model.lists[k]=e.target.value;renderRules()});
+    $("lc_"+k).addEventListener("input",e=>{model.lists[k]=e.target.value;renderRules()});
+  });
+}
 $("ftOn").addEventListener("change",e=>{model.fastTrack.on=e.target.checked;renderScore()});
 
 function renderRules(){
   const sum=GROUPS.reduce((a,g)=>a+model.weights[g.id],0)||1;
   let t=`LEAD SCORE MODEL — ${model.client||"Unnamed client"}\nScale: 1–10\n\nWEIGHTS\n`;
   GROUPS.forEach(g=>t+=`  ${g.name}: ${Math.round(model.weights[g.id]/sum*100)}%\n`);
-  t+=`\nROUTING\n  Score ≥ ${model.thresholds.sales}: send to sales CRM, assign rep, alert\n  Score ${model.thresholds.nurture}–${model.thresholds.sales}: marketing nurture\n  Score < ${model.thresholds.nurture}: hold and recycle\n`;
+  const L=model.lists||{};const to=k=>L[k]?` → ${model.crm||"CRM"} list: ${L[k]}`:"";
+  t+=`\nROUTING\n  Score ≥ ${model.thresholds.sales}: send to sales CRM, assign rep, alert${to("sales")}\n  Score ${model.thresholds.nurture}–${model.thresholds.sales}: marketing nurture${to("nurture")}\n  Score < ${model.thresholds.nurture}: hold and recycle${to("hold")}\n`;
   if(model.fastTrack.on)t+=`  Fast-track: demo, quote or consult request with Fit ≥ ${model.fastTrack.fitMin} goes to sales\n`;
-  t+=`  Any disqualifier: disqualified\n`;
+  t+=`  Any disqualifier: disqualified${to("dq")}\n  Alert: notify NuSpark and the client when a lead moves from nurture to sales\n`;
   t+=`  Blank variables: ${model.knownOnly?"skipped (score only what we know); under 25% of signals known caps the route at nurture":"count as zero"}\n`;
   GROUPS.forEach(g=>{if(!(Number(model.weights[g.id])>0))t+=`  ${g.name}: skipped\n`});
   GROUPS.forEach(g=>{
@@ -402,7 +436,7 @@ function renderRules(){
   });
   t+=`\nDEDUCTIONS\n`;
   model.negatives.filter(n=>n.on).forEach(n=>t+=`  ${n.name}: ${n.dq?"disqualify":"−"+n.pen}\n`);
-  t+=`\nLead record fields: final score, route, Fit/Engagement/Intent scores, lead source (UTM), top drivers.`;
+  t+=`\nLead record fields: final score, route, Fit/Engagement/Intent scores, first and latest source (UTM source, medium, campaign, content), top drivers.`;
   $("rules").textContent=t;
 }
 $("copyBtn").addEventListener("click",()=>{
