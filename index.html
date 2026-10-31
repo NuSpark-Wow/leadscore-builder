@@ -1,0 +1,355 @@
+<title>NuSpark LeadScore Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: working tool — variable list on the left, sticky score panel on the right; stacks on phones */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#14213a; --muted:#5b6678; --line:#d9dee6;
+  --navy:#1b3358; --accent:#0e8a86; --accent-soft:#e2f3f2;
+  --sales:#1f8a4c; --nurture:#c27a12; --hold:#6b7486; --dq:#c23b3b;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1622; --surface:#16202f; --ink:#e6ebf2; --muted:#9aa6b8; --line:#2a3647;
+  --navy:#9fb8e0; --accent:#3cc2bc; --accent-soft:#163533;
+  --sales:#4cc27e; --nurture:#e6a548; --hold:#8e98ab; --dq:#ec6d6d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1622; --surface:#16202f; --ink:#e6ebf2; --muted:#9aa6b8; --line:#2a3647;
+  --navy:#9fb8e0; --accent:#3cc2bc; --accent-soft:#163533;
+  --sales:#4cc27e; --nurture:#e6a548; --hold:#8e98ab; --dq:#ec6d6d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;color:var(--navy)}
+h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.05rem;font-weight:700}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:600}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.clientbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=text],input[type=number],select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0}
+input[type=number]{width:62px;font-family:var(--f-mono)}
+button{font:inherit;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;cursor:pointer}
+button.primary,a.primary{background:var(--navy);color:var(--bg);border-color:var(--navy)}
+button.danger{color:var(--dq);border-color:var(--dq)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.status{font-size:.82rem;color:var(--muted);min-height:1.2em}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}.side{order:-1}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.weights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.weights{grid-template-columns:minmax(0,1fr)}}
+.wbox{display:flex;flex-direction:column;gap:4px}
+.wbox label{font-weight:600}
+.wbox input[type=range]{width:100%;accent-color:var(--accent)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tab{border-radius:999px;padding:5px 12px;font-size:.88rem}
+.tab[aria-selected=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.vars{display:flex;flex-direction:column}
+.var{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:start}
+.var:last-child{border-bottom:0}
+.var.off .vname,.var.off .vhint{opacity:.45}
+.vname{font-weight:600}
+.vhint{font-size:.82rem;color:var(--muted)}
+.vctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.vctrl select{max-width:220px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:4px 9px;font-size:.8rem;background:transparent;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--navy);color:var(--bg)}
+.pts{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem}
+.pts label{display:flex;gap:6px;align-items:center}
+details summary{cursor:pointer;font-size:.8rem;color:var(--accent);font-weight:600}
+.small{font-size:.8rem}
+.side{position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+.score{display:flex;align-items:baseline;gap:10px}
+.score .big{font-family:var(--f-display);font-weight:800;font-size:3.2rem;line-height:1;color:var(--ink)}
+.chip{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--surface)}
+.chip.sales{background:var(--sales)}.chip.nurture{background:var(--nurture)}.chip.hold{background:var(--hold)}.chip.dq{background:var(--dq)}
+.gauge{position:relative;height:16px;border-radius:4px;overflow:hidden;display:flex}
+.gauge span{height:100%}
+.gmark{position:absolute;top:-4px;width:3px;height:24px;background:var(--ink);border-radius:2px;transform:translateX(-1px)}
+.gwrap{position:relative;padding-top:4px}
+.ticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:86px minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:.85rem}
+.track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.fill{height:100%;background:var(--accent)}
+.drivers{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:column;gap:2px}
+.thr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center}
+pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;white-space:pre-wrap;margin:0;max-height:300px;overflow:auto}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.example{font-size:.75rem;background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:2px 6px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">NuSpark Marketing · Lead Scoring</div>
+      <h1>LeadScore Builder</h1>
+      <div class="muted small">An example model. Change the variables and weights, test a lead, and see when it goes to sales.</div>
+    </div>
+    <div class="panel" style="padding:12px;gap:8px">
+      <div class="clientbar">
+        <input id="clientName" type="text" placeholder="Your company (optional)" aria-label="Your company">
+        <button id="newBtn">Reset</button>
+        <a class="primary" href="https://calendly.com/pmosenson/30-minute-meeting-nuspark" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:8px;text-decoration:none;display:inline-block">Build my model with NuSpark</a>
+      </div>
+      <div id="status" class="status" role="status"></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <main style="display:flex;flex-direction:column;gap:18px;min-width:0">
+      <section class="panel">
+        <h2>1. Score weights</h2>
+        <div class="muted small">How much each part counts toward the final 1–10 score. Weights are normalized, so they always add to 100%.</div>
+        <div class="weights" id="weights"></div>
+      </section>
+
+      <section class="panel">
+        <h2>2. Variables</h2>
+        <div class="muted small">Turn variables on or off, set importance (1–3), and edit the points for each answer. Use the “This lead” menus to test a lead live.</div>
+        <div class="tabs" role="tablist" id="tabs"></div>
+        <div class="vars" id="vars"></div>
+      </section>
+
+      <section class="panel">
+        <h2>3. Routing thresholds</h2>
+        <div class="thr">
+          <label for="tSales">Send to sales CRM at score ≥</label><input id="tSales" type="number" min="1" max="10" step="0.5">
+          <label for="tNurture">Marketing nurture at score ≥</label><input id="tNurture" type="number" min="1" max="10" step="0.5">
+          <label for="ftOn">Fast-track hand-raisers (demo, quote, consult) to sales when Fit ≥</label>
+          <div style="display:flex;gap:8px;align-items:center"><input id="ftOn" type="checkbox" aria-label="Fast-track on"><input id="ftFit" type="number" min="0" max="10" step="0.5" aria-label="Fit minimum"></div>
+        </div>
+        <div class="muted small">Below the nurture threshold, leads are held for recycling. Any disqualifier routes straight to Disqualified.</div>
+      </section>
+
+      <section class="panel">
+        <h2>4. Rules for the CRM</h2>
+        <div class="muted small">A plain summary of this model to set up in the client’s CRM or automation.</div>
+        <pre class="rules" id="rules"></pre>
+        <div><button id="copyBtn">Copy rules</button></div>
+      </section>
+    </main>
+
+    <aside class="side">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Test lead score</h2><span class="example" id="exampleTag">Example lead</span></div>
+        <div class="score"><span class="big mono" id="final">–</span><span class="muted">/ 10</span><span id="route" class="chip hold">Hold</span></div>
+        <div class="gwrap"><div class="gauge" id="gauge"></div><div class="gmark" id="gmark"></div></div>
+        <div class="ticks"><span>1</span><span>5</span><span>10</span></div>
+        <div class="bars" id="bars"></div>
+        <div><div class="small muted" style="font-weight:600">Top drivers</div><ol class="drivers" id="drivers"></ol></div>
+        <div id="penalty" class="small"></div>
+        <button id="clearLead">Clear test lead</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const GROUPS=[{id:"fit",name:"Fit"},{id:"eng",name:"Engagement"},{id:"intent",name:"Intent"}];
+function O(l,p){return{l,p}}
+function V(id,g,name,hint,imp,opts){return{id,g,name,hint,imp,on:true,opts}}
+const TEMPLATE={
+  client:"",weights:{fit:40,eng:35,intent:25},
+  thresholds:{sales:7,nurture:4},fastTrack:{on:true,fitMin:6},
+  vars:[
+    V("industry","fit","Industry match","Is the company in the client's core ICP industries?",3,[O("Core ICP industry",10),O("Adjacent industry",6),O("Outside ICP",1),O("Unknown",0)]),
+    V("size","fit","Company size","Employee count against the ICP range.",2,[O("In ICP range",10),O("Slightly outside",5),O("Far outside",1),O("Unknown",0)]),
+    V("revenue","fit","Annual revenue","Revenue against the ICP range.",1,[O("In range",10),O("Near range",5),O("Outside range",1),O("Unknown",0)]),
+    V("seniority","fit","Title seniority","How senior the contact is.",3,[O("C-level or owner",10),O("VP",9),O("Director",7),O("Manager",5),O("Individual contributor",2),O("Unknown",0)]),
+    V("dept","fit","Department","Does the contact sit in the buying function?",2,[O("Buying function",10),O("Influencing function",6),O("Unrelated",1),O("Unknown",0)]),
+    V("role","fit","Buying role","Role in the decision.",2,[O("Decision maker",10),O("Influencer",6),O("End user",4),O("Unknown",0)]),
+    V("tenure","fit","Time in role","New leaders are often more open to change.",1,[O("New in role (under 12 months)",10),O("Established (1–3 years)",6),O("Long tenure (3+ years)",4),O("Unknown",0)]),
+    V("geo","fit","Geography","Is the lead in a market the client serves?",1,[O("Primary market",10),O("Secondary market",5),O("Not served",0)]),
+    V("tech","fit","Tech stack","Technology that signals fit or a switch opportunity.",1,[O("Uses complementary tech",10),O("Uses a competitor",6),O("Neutral",3),O("Unknown",0)]),
+    V("email","fit","Email quality","Business email and verification status.",1,[O("Business, verified",10),O("Business, unverified",5),O("Personal email",2)]),
+    V("offer","eng","Offer converted","The strongest action the lead has taken.",3,[O("Demo, quote or consult request",10),O("Assessment or calculator completed",8),O("Webinar attended",7),O("Webinar registered",6),O("eBook or guide download",5),O("Newsletter signup",3),O("None",0)]),
+    V("pages","eng","High-intent pages","Deepest page type viewed.",2,[O("Pricing or contact page",10),O("Case studies",7),O("Service pages",5),O("Blog only",2),O("None",0)]),
+    V("visits","eng","Return visits (30 days)","Repeat visits by this contact.",2,[O("5 or more",10),O("3–4",7),O("2",4),O("1",1),O("None",0)]),
+    V("watch","eng","Webinar / video watch depth","Share of the on-demand webinar or video watched.",1,[O("75% or more",10),O("50–74%",7),O("25–49%",4),O("Under 25%",1),O("Not applicable",0)]),
+    V("emaileng","eng","Email engagement","Response to outreach and nurture emails.",2,[O("Replied",10),O("Clicked",6),O("Opened only",2),O("None",0)]),
+    V("linkedin","eng","LinkedIn engagement","Response on LinkedIn.",1,[O("Replied or engaged with content",10),O("Accepted connection",5),O("None",0)]),
+    V("multi","eng","Contacts engaged at company","How many people from the account are active.",2,[O("3 or more",10),O("2",6),O("1",2)]),
+    V("recency","eng","Last activity","How recently the lead engaged.",2,[O("This week",10),O("Within 30 days",6),O("31–60 days",3),O("Over 60 days",0)]),
+    V("topic","intent","Buyer intent topics","Third-party research on the client's topics.",2,[O("Surging on multiple topics",10),O("Surging on one topic",8),O("Moderate",5),O("None or unknown",0)]),
+    V("funding","intent","Recent funding","Recent funding round.",2,[O("Within 90 days",10),O("3–6 months ago",6),O("None",0)]),
+    V("fundsize","intent","Funding size","Size of the latest round, a sign of buying power.",1,[O("Large round for its stage",10),O("Typical round",6),O("Small round",3),O("None or unknown",0)]),
+    V("pe","intent","Private equity backing","PE-backed companies often move faster on growth.",1,[O("Recently PE-backed",10),O("PE-backed",7),O("No",0)]),
+    V("mna","intent","Merger or acquisition","Recent organizational change event.",2,[O("Within 6 months",10),O("6–12 months ago",5),O("None",0)]),
+    V("hiring","intent","Job postings (relevant roles)","Open roles tied to the client's solution.",2,[O("Several open roles",10),O("One open role",6),O("None",0)]),
+    V("growth","intent","Hiring growth","Overall headcount growth.",1,[O("Rapid growth",10),O("Steady growth",5),O("Flat or shrinking",0)]),
+    V("leader","intent","Leadership change or promotion","New hire or promotion in the buying function.",1,[O("Within 90 days",10),O("Over 90 days ago",4),O("None",0)]),
+    V("expand","intent","New product, service or expansion","Launch, new market or new location.",1,[O("Announced within 90 days",10),O("None",0)]),
+    V("partner","intent","New partnership","Strategic partnership or investment announced.",1,[O("Within 6 months",10),O("None",0)]),
+    V("costcut","intent","Cost-cutting initiative","May signal a need for efficiency solutions.",1,[O("Announced",10),O("None",0)]),
+    V("visitor","intent","Account website activity","Company-level visits from Visitor ID.",2,[O("Multiple visits, high-intent pages",10),O("Some visits",5),O("None",0)]),
+    V("compare","intent","Comparison research","Viewed comparison or alternative pages.",1,[O("Yes",10),O("No",0)]),
+    V("timeline","intent","Stated timeline","Buying timeline from a form question.",2,[O("Within 90 days",10),O("3–6 months",6),O("Researching",3),O("Not asked",0)])
+  ],
+  negatives:[
+    {id:"student",name:"Student, job seeker or vendor",pen:10,dq:true,on:true},
+    {id:"competitor",name:"Competitor",pen:10,dq:true,on:true},
+    {id:"unsub",name:"Unsubscribed or bounced",pen:3,dq:false,on:true},
+    {id:"freeemail",name:"Personal email and no company found",pen:2,dq:false,on:true},
+    {id:"stale",name:"No activity in 90+ days",pen:2,dq:false,on:true}
+  ]
+};
+const EXAMPLE_LEAD={industry:0,size:0,revenue:1,seniority:1,dept:0,role:0,tenure:0,geo:0,tech:3,email:0,offer:3,pages:1,visits:1,watch:1,emaileng:1,linkedin:2,multi:1,recency:0,topic:1,funding:0,fundsize:1,pe:2,mna:2,hiring:2,growth:1,leader:2,expand:1,partner:1,costcut:1,visitor:1,compare:1,timeline:3,neg:{}};
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+let model=clone(TEMPLATE);
+let lead=clone(EXAMPLE_LEAD);
+let tab="fit";
+let currentId="";
+let models={};
+let db=null;
+const $=id=>document.getElementById(id);
+function setStatus(t){$("status").textContent=t}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function compute(){
+  const gs={};
+  const contrib=[];
+  for(const g of GROUPS){
+    let num=0,den=0;
+    for(const v of model.vars.filter(v=>v.g===g.id&&v.on&&v.imp>0)){
+      den+=v.imp*10;
+      const i=lead[v.id];
+      const p=(i!=null&&v.opts[i])?Number(v.opts[i].p)||0:0;
+      num+=v.imp*p;
+      contrib.push({v,g:g.id,p,raw:v.imp*p});
+    }
+    gs[g.id]=den?num/den*10:0;
+  }
+  const wsum=GROUPS.reduce((a,g)=>a+(Number(model.weights[g.id])||0),0)||1;
+  let base=0;
+  for(const g of GROUPS){const w=(Number(model.weights[g.id])||0)/wsum;base+=gs[g.id]*w;
+    for(const c of contrib.filter(c=>c.g===g.id)){
+      const den=model.vars.filter(v=>v.g===g.id&&v.on&&v.imp>0).reduce((a,v)=>a+v.imp*10,0)||1;
+      c.share=c.raw/den*10*w;}}
+  let pen=0,dq=false;const hits=[];
+  for(const n of model.negatives){if(n.on&&lead.neg&&lead.neg[n.id]){pen+=Number(n.pen)||0;if(n.dq)dq=true;hits.push(n)}}
+  const final=Math.max(1,Math.min(10,base-pen));
+  const offer=model.vars.find(v=>v.id==="offer");
+  const handRaise=offer&&offer.on&&lead.offer===0;
+  let route;
+  if(dq)route="dq";
+  else if(final>=model.thresholds.sales)route="sales";
+  else if(model.fastTrack.on&&handRaise&&gs.fit>=model.fastTrack.fitMin)route="sales";
+  else if(final>=model.thresholds.nurture)route="nurture";
+  else route="hold";
+  const fast=route==="sales"&&final<model.thresholds.sales;
+  contrib.sort((a,b)=>b.share-a.share);
+  return{gs,final,route,fast,hits,top:contrib.filter(c=>c.share>0).slice(0,4)};
+}
+const ROUTE={sales:"Sales CRM",nurture:"Nurture",hold:"Hold",dq:"Disqualified"};
+
+function renderScore(){
+  const r=compute();
+  $("final").textContent=r.final.toFixed(1);
+  const rc=$("route");rc.className="chip "+r.route;rc.textContent=ROUTE[r.route]+(r.fast?" · fast-track":"");
+  const s=model.thresholds.sales,n=model.thresholds.nurture;
+  const pct=x=>((x-1)/9*100);
+  $("gauge").innerHTML=`<span style="width:${pct(n)}%;background:var(--hold);opacity:.55"></span><span style="width:${pct(s)-pct(n)}%;background:var(--nurture);opacity:.7"></span><span style="flex:1;background:var(--sales);opacity:.8"></span>`;
+  $("gmark").style.left=pct(r.final)+"%";
+  $("bars").innerHTML=GROUPS.map(g=>`<div class="bar"><span>${g.name}</span><div class="track"><div class="fill" style="width:${r.gs[g.id]*10}%"></div></div><span class="mono">${r.gs[g.id].toFixed(1)}</span></div>`).join("");
+  $("drivers").innerHTML=r.top.length?r.top.map(c=>`<li>${esc(c.v.name)}: ${esc(c.v.opts[lead[c.v.id]].l)} <span class="muted mono">+${c.share.toFixed(1)}</span></li>`).join(""):"<li class='muted'>No positive signals yet</li>";
+  $("penalty").innerHTML=r.hits.length?`<span style="color:var(--dq);font-weight:600">Deductions:</span> `+r.hits.map(h=>esc(h.name)+(h.dq?" (disqualifies)":" −"+h.pen)).join("; "):"";
+  renderRules();
+}
+
+function renderWeights(){
+  $("weights").innerHTML=GROUPS.map(g=>`<div class="wbox"><label for="w_${g.id}">${g.name} <span class="mono muted" id="wv_${g.id}"></span></label><input type="range" id="w_${g.id}" min="0" max="100" step="5" value="${model.weights[g.id]}"></div>`).join("");
+  GROUPS.forEach(g=>{$("w_"+g.id).addEventListener("input",e=>{model.weights[g.id]=Number(e.target.value);showWeights();renderScore()})});
+  showWeights();
+}
+function showWeights(){const sum=GROUPS.reduce((a,g)=>a+model.weights[g.id],0)||1;GROUPS.forEach(g=>{$("wv_"+g.id).textContent=Math.round(model.weights[g.id]/sum*100)+"%"})}
+
+function renderTabs(){
+  const all=[...GROUPS,{id:"neg",name:"Disqualifiers"}];
+  $("tabs").innerHTML=all.map(t=>`<button class="tab" role="tab" id="tab_${t.id}" aria-selected="${t.id===tab}">${t.name}</button>`).join("");
+  all.forEach(t=>$("tab_"+t.id).addEventListener("click",()=>{tab=t.id;renderTabs();renderVars()}));
+}
+
+function renderVars(){
+  const box=$("vars");
+  if(tab==="neg"){
+    box.innerHTML=model.negatives.map(n=>`<div class="var ${n.on?"":"off"}">
+      <input type="checkbox" id="non_${n.id}" ${n.on?"checked":""} aria-label="Use ${esc(n.name)}">
+      <div><div class="vname">${esc(n.name)}</div><div class="vhint">${n.dq?"Disqualifies the lead":"Subtracts points from the final score"}</div></div>
+      <div class="vctrl"><label class="small" for="npen_${n.id}">Points −</label><input type="number" id="npen_${n.id}" min="0" max="10" step="0.5" value="${n.pen}">
+      <label class="small"><input type="checkbox" id="ndq_${n.id}" ${n.dq?"checked":""}> Disqualify</label>
+      <label class="small"><input type="checkbox" id="nlead_${n.id}" ${lead.neg[n.id]?"checked":""}> This lead</label></div></div>`).join("");
+    model.negatives.forEach(n=>{
+      $("non_"+n.id).addEventListener("change",e=>{n.on=e.target.checked;renderVars();renderScore()});
+      $("npen_"+n.id).addEventListener("input",e=>{n.pen=Number(e.target.value)||0;renderScore()});
+      $("ndq_"+n.id).addEventListener("change",e=>{n.dq=e.target.checked;renderVars();renderScore()});
+      $("nlead_"+n.id).addEventListener("change",e=>{lead.neg[n.id]=e.target.checked;markLead();renderScore()});
+    });
+    return;
+  }
+  const vs=model.vars.filter(v=>v.g===tab);
+  box.innerHTML=vs.map(v=>`<div class="var ${v.on?"":"off"}" id="row_${v.id}">
+    <input type="checkbox" id="on_${v.id}" ${v.on?"checked":""} aria-label="Use ${esc(v.name)}">
+    <div style="min-width:0"><div class="vname">${esc(v.name)}</div><div class="vhint">${esc(v.hint)}</div></div>
+    <div class="vctrl">
+      <div class="seg" role="group" aria-label="Importance">${[1,2,3].map(i=>`<button id="imp_${v.id}_${i}" aria-pressed="${v.imp===i}" title="Importance ${i}">${i}</button>`).join("")}</div>
+      <select id="lead_${v.id}" aria-label="This lead: ${esc(v.name)}"><option value="">This lead: not set</option>${v.opts.map((o,i)=>`<option value="${i}" ${lead[v.id]===i?"selected":""}>${esc(o.l)}</option>`).join("")}</select>
+    </div>
+    <details class="pts"><summary>Edit points</summary><div class="pts" style="padding-top:6px">${v.opts.map((o,i)=>`<label for="pt_${v.id}_${i}">${esc(o.l)} <input type="number" id="pt_${v.id}_${i}" min="0" max="10" step="1" value="${o.p}"></label>`).join("")}</div></details>
+  </div>`).join("");
+  vs.forEach(v=>{
+    $("on_"+v.id).addEventListener("change",e=>{v.on=e.target.checked;$("row_"+v.id).classList.toggle("off",!v.on);renderScore()});
+    [1,2,3].forEach(i=>$(`imp_${v.id}_${i}`).addEventListener("click",()=>{v.imp=i;[1,2,3].forEach(j=>$(`imp_${v.id}_${j}`).setAttribute("aria-pressed",j===i));renderScore()}));
+    $("lead_"+v.id).addEventListener("change",e=>{lead[v.id]=e.target.value===""?null:Number(e.target.value);markLead();renderScore()});
+    v.opts.forEach((o,i)=>$(`pt_${v.id}_${i}`).addEventListener("input",e=>{o.p=Math.max(0,Math.min(10,Number(e.target.value)||0));renderScore()}));
+  });
+}
+function markLead(){$("exampleTag").textContent="Test lead"}
+
+function renderThresholds(){
+  $("tSales").value=model.thresholds.sales;$("tNurture").value=model.thresholds.nurture;
+  $("ftOn").checked=model.fastTrack.on;$("ftFit").value=model.fastTrack.fitMin;
+}
+["tSales","tNurture","ftFit"].forEach(id=>$(id).addEventListener("input",()=>{
+  model.thresholds.sales=Number($("tSales").value)||7;model.thresholds.nurture=Number($("tNurture").value)||4;
+  model.fastTrack.fitMin=Number($("ftFit").value)||0;renderScore()}));
+$("ftOn").addEventListener("change",e=>{model.fastTrack.on=e.target.checked;renderScore()});
+
+function renderRules(){
+  const sum=GROUPS.reduce((a,g)=>a+model.weights[g.id],0)||1;
+  let t=`LEAD SCORE MODEL — ${model.client||"Unnamed client"}\nScale: 1–10\n\nWEIGHTS\n`;
+  GROUPS.forEach(g=>t+=`  ${g.name}: ${Math.round(model.weights[g.id]/sum*100)}%\n`);
+  t+=`\nROUTING\n  Score ≥ ${model.thresholds.sales}: send to sales CRM, assign rep, alert\n  Score ${model.thresholds.nurture}–${model.thresholds.sales}: marketing nurture\n  Score < ${model.thresholds.nurture}: hold and recycle\n`;
+  if(model.fastTrack.on)t+=`  Fast-track: demo, quote or consult request with Fit ≥ ${model.fastTrack.fitMin} goes to sales\n`;
+  t+=`  Any disqualifier: disqualified\n`;
+  GROUPS.forEach(g=>{
+    t+=`\n${g.name.toUpperCase()} (group score 0–10 = weighted average)\n`;
+    model.vars.filter(v=>v.g===g.id&&v.on).forEach(v=>{t+=`  ${v.name} [importance ${v.imp}]: `+v.opts.map(o=>`${o.l} ${o.p}`).join(" · ")+"\n"});
+  });
+  t+=`\nDEDUCTIONS\n`;
+  model.negatives.filter(n=>n.on).forEach(n=>t+=`  ${n.name}: ${n.dq?"disqualify":"−"+n.pen}\n`);
+  t+=`\nLead record fields: final score, route, Fit/Engagement/Intent scores, lead source (UTM), top drivers.`;
+  $("rules").textContent=t;
+}
+$("copyBtn").addEventListener("click",()=>{
+  const t=$("rules").textContent;
+  try{navigator.clipboard.writeText(t).then(()=>setStatus("Rules copied."),()=>selectRules())}catch(e){selectRules()}
+});
+function selectRules(){const r=document.createRange();r.selectNodeContents($("rules"));const s=getSelection();s.removeAllRanges();s.addRange(r);setStatus("Rules selected. Press copy on your keyboard.")}
+
+function renderAll(){$("clientName").value=model.client||"";renderWeights();renderTabs();renderVars();renderThresholds();renderScore()}
+
+$("clearLead").addEventListener("click",()=>{lead={neg:{}};markLead();renderVars();renderScore()});
+
+$("newBtn").addEventListener("click",()=>{model=clone(TEMPLATE);lead=clone(EXAMPLE_LEAD);$("exampleTag").textContent="Example lead";renderAll();setStatus("Example model restored.")});
+$("clientName").addEventListener("input",e=>{model.client=e.target.value;renderRules()});
+renderAll();setStatus("Example model loaded. Try changing the weights or the lead.");
+</script>
