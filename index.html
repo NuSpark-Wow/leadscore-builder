@@ -75,13 +75,28 @@ details summary{cursor:pointer;font-size:.8rem;color:var(--accent);font-weight:6
 .gwrap{position:relative;padding-top:4px}
 .ticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
 .bars{display:flex;flex-direction:column;gap:8px}
-.bar{display:grid;grid-template-columns:86px minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:.85rem}
+.bar{display:grid;grid-template-columns:86px minmax(0,1fr) 52px;gap:8px;align-items:center;font-size:.85rem}
 .track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
 .fill{height:100%;background:var(--accent)}
 .drivers{margin:0;padding-left:18px;font-size:.85rem;display:flex;flex-direction:column;gap:2px}
 .thr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center}
 pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;white-space:pre-wrap;margin:0;max-height:300px;overflow:auto}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.how{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:880px){.how{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.how{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.step .n{font-family:var(--f-mono);font-size:.75rem;color:var(--accent);font-weight:600}
+.step b{font-family:var(--f-display);color:var(--navy)}
+.gloss{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 14px;font-size:.85rem;margin:8px 0 0}
+@media (max-width:520px){.gloss{grid-template-columns:minmax(0,1fr)}.gloss dd{margin-bottom:6px}}
+.gloss dt{font-weight:600}.gloss dd{margin:0;color:var(--muted)}
+.impwrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.implabel{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.vsrc{font-size:.75rem;color:var(--accent);margin-top:2px}
+.gdesc{font-size:.85rem;background:var(--bg);border-radius:6px;padding:8px 10px}
+.toggle{display:flex;gap:8px;align-items:flex-start;font-size:.85rem}
+.known{font-size:.82rem}
 .example{font-size:.75rem;background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:2px 6px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
@@ -91,7 +106,7 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
     <div>
       <div class="eyebrow">NuSpark Marketing · Lead Scoring</div>
       <h1>LeadScore Builder</h1>
-      <div class="muted small">An example model. Change the variables and weights, test a lead, and see when it goes to sales.</div>
+      <div class="muted small">Example model. Clients get a private, shared version under their company name, built with NuSpark.</div>
     </div>
     <div class="panel" style="padding:12px;gap:8px">
       <div class="clientbar">
@@ -103,18 +118,48 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
     </div>
   </header>
 
+  <section class="panel" id="howPanel">
+    <h2>How it works</h2>
+    <div class="how">
+      <div class="step"><span class="n">STEP 1</span><b>Set the weights</b><span class="small muted">Decide how much Fit, Engagement and Intent each count toward the final score.</span></div>
+      <div class="step"><span class="n">STEP 2</span><b>Pick the variables</b><span class="small muted">Turn on the signals you can track, set how important each one is, and adjust the points for each answer.</span></div>
+      <div class="step"><span class="n">STEP 3</span><b>Set the thresholds</b><span class="small muted">Choose the score that sends a lead to sales and the score that puts it in nurture.</span></div>
+      <div class="step"><span class="n">STEP 4</span><b>Test a lead</b><span class="small muted">Use the “This lead” menus to describe a lead. The score and route update instantly in the Test lead score panel.</span></div>
+    </div>
+    <details>
+      <summary>Definitions</summary>
+      <dl class="gloss">
+        <dt>Lead score</dt><dd>A 1–10 rating of how ready a lead is for sales. 10 is a perfect fit that is actively buying.</dd>
+        <dt>Fit</dt><dd>Is this the right company and the right person? Industry, size, revenue, title, department and more.</dd>
+        <dt>Engagement</dt><dd>What has this person done with you? Offers converted, pages viewed, return visits, email replies.</dd>
+        <dt>Intent</dt><dd>Is the company showing signs it is ready to buy? Research topics, funding, hiring, leadership changes, website activity.</dd>
+        <dt>Weight</dt><dd>How much a category counts toward the final score. Set a weight to 0 to skip that category.</dd>
+        <dt>Importance</dt><dd>How much one variable counts inside its category: Low, Med or High. A High variable counts three times as much as a Low one.</dd>
+        <dt>Points</dt><dd>The value of each answer, from 0 to 10. 10 is the best possible answer for that variable.</dd>
+        <dt>Disqualifier</dt><dd>A deal-breaker, like a competitor or a job seeker. It removes the lead or subtracts points.</dd>
+        <dt>Sales</dt><dd>The score reached the sales threshold. The lead goes to the CRM, is assigned to a rep and the rep is alerted.</dd>
+        <dt>Nurture</dt><dd>Promising but not ready. The lead gets marketing follow-up until its score rises.</dd>
+        <dt>Hold</dt><dd>Too early or too little known. The lead is kept and recycled later.</dd>
+        <dt>Fast-track</dt><dd>A lead who asks for a demo, quote or consult goes straight to sales if the company is a good fit, whatever the total score.</dd>
+        <dt>Score only what we know</dt><dd>When on, blank variables are skipped instead of counted as zero. Useful when data is still coming in. If fewer than a quarter of the signals are known, the lead goes to nurture instead of sales until more data comes in.</dd>
+      </dl>
+    </details>
+  </section>
+
   <div class="grid">
     <main style="display:flex;flex-direction:column;gap:18px;min-width:0">
       <section class="panel">
         <h2>1. Score weights</h2>
-        <div class="muted small">How much each part counts toward the final 1–10 score. Weights are normalized, so they always add to 100%.</div>
+        <div class="muted small">How much each part counts toward the final 1–10 score. Weights are normalized, so they always add to 100%. Set a slider to 0 to skip that category.</div>
         <div class="weights" id="weights"></div>
       </section>
 
       <section class="panel">
         <h2>2. Variables</h2>
-        <div class="muted small">Turn variables on or off, set importance (1–3), and edit the points for each answer. Use the “This lead” menus to test a lead live.</div>
+        <div class="muted small">Check the box to use a variable, uncheck it if you can’t track it. Set its importance (Low, Med, High), and open “Edit points” to change what each answer is worth. Use the “This lead” menus to test a lead live.</div>
+        <label class="toggle"><input type="checkbox" id="knownOnly"><span><b>Score only what we know.</b> <span class="muted">Skip blank variables instead of counting them as zero.</span></span></label>
         <div class="tabs" role="tablist" id="tabs"></div>
+        <div class="gdesc" id="gdesc"></div>
         <div class="vars" id="vars"></div>
       </section>
 
@@ -126,7 +171,7 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
           <label for="ftOn">Fast-track hand-raisers (demo, quote, consult) to sales when Fit ≥</label>
           <div style="display:flex;gap:8px;align-items:center"><input id="ftOn" type="checkbox" aria-label="Fast-track on"><input id="ftFit" type="number" min="0" max="10" step="0.5" aria-label="Fit minimum"></div>
         </div>
-        <div class="muted small">Below the nurture threshold, leads are held for recycling. Any disqualifier routes straight to Disqualified.</div>
+        <div class="muted small"><b>Sales:</b> goes to the CRM and a rep is alerted. <b>Nurture:</b> marketing follow-up until the score rises. <b>Hold:</b> below the nurture threshold, kept and recycled later. Any disqualifier routes straight to Disqualified.</div>
       </section>
 
       <section class="panel">
@@ -144,6 +189,7 @@ pre.rules{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border
         <div class="gwrap"><div class="gauge" id="gauge"></div><div class="gmark" id="gmark"></div></div>
         <div class="ticks"><span>1</span><span>5</span><span>10</span></div>
         <div class="bars" id="bars"></div>
+        <div class="known muted" id="known"></div>
         <div><div class="small muted" style="font-weight:600">Top drivers</div><ol class="drivers" id="drivers"></ol></div>
         <div id="penalty" class="small"></div>
         <button id="clearLead">Clear test lead</button>
@@ -203,6 +249,14 @@ const TEMPLATE={
 };
 const EXAMPLE_LEAD={industry:0,size:0,revenue:1,seniority:1,dept:0,role:0,tenure:0,geo:0,tech:3,email:0,offer:3,pages:1,visits:1,watch:1,emaileng:1,linkedin:2,multi:1,recency:0,topic:1,funding:0,fundsize:1,pe:2,mna:2,hiring:2,growth:1,leader:2,expand:1,partner:1,costcut:1,visitor:1,compare:1,timeline:3,neg:{}};
 
+const GDESC={
+  fit:"<b>Fit:</b> is this the right company and the right person? Data comes from enrichment, forms and the CRM.",
+  eng:"<b>Engagement:</b> what has this person done with you? Data comes from forms, website analytics, email and LinkedIn.",
+  intent:"<b>Intent:</b> is the company showing signs it’s ready to buy? Data comes from intent research, company news, job boards and Visitor ID.",
+  neg:"<b>Disqualifiers:</b> deal-breakers. Check “Disqualify” to remove the lead, or set points to subtract from the score."};
+const SRC={industry:"Enrichment",size:"Enrichment",revenue:"Enrichment",seniority:"Form or enrichment",dept:"Enrichment",role:"Form or sales notes",tenure:"Enrichment or LinkedIn",geo:"Form or enrichment",tech:"Technology lookup",email:"Email verification",
+  offer:"Forms and CRM",pages:"Website analytics",visits:"Website analytics",watch:"Webinar or video platform",emaileng:"Email platform",linkedin:"LinkedIn",multi:"CRM and Visitor ID",recency:"CRM",
+  topic:"Intent data",funding:"Company news",fundsize:"Company news",pe:"Company news",mna:"Company news",hiring:"Job boards",growth:"Enrichment or LinkedIn",leader:"Company news or LinkedIn",expand:"Company news",partner:"Company news",costcut:"Company news",visitor:"Visitor ID",compare:"Website analytics",timeline:"Form question"};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let model=clone(TEMPLATE);
 let lead=clone(EXAMPLE_LEAD);
@@ -215,25 +269,29 @@ function setStatus(t){$("status").textContent=t}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
 function compute(){
-  const gs={};
-  const contrib=[];
+  const gs={};const contrib=[];const dens={};
+  const ko=!!model.knownOnly;
+  let known=0,total=0;
   for(const g of GROUPS){
     let num=0,den=0;
     for(const v of model.vars.filter(v=>v.g===g.id&&v.on&&v.imp>0)){
+      const i=lead[v.id];const has=i!=null&&v.opts[i];
+      total++;if(has)known++;
+      if(ko&&!has)continue;
       den+=v.imp*10;
-      const i=lead[v.id];
-      const p=(i!=null&&v.opts[i])?Number(v.opts[i].p)||0:0;
+      const p=has?Number(v.opts[i].p)||0:0;
       num+=v.imp*p;
       contrib.push({v,g:g.id,p,raw:v.imp*p});
     }
-    gs[g.id]=den?num/den*10:0;
+    dens[g.id]=den;
+    gs[g.id]=den?num/den*10:null;
   }
-  const wsum=GROUPS.reduce((a,g)=>a+(Number(model.weights[g.id])||0),0)||1;
+  const active=GROUPS.filter(g=>(Number(model.weights[g.id])||0)>0&&gs[g.id]!=null);
+  const wsum=active.reduce((a,g)=>a+(Number(model.weights[g.id])||0),0)||1;
   let base=0;
-  for(const g of GROUPS){const w=(Number(model.weights[g.id])||0)/wsum;base+=gs[g.id]*w;
-    for(const c of contrib.filter(c=>c.g===g.id)){
-      const den=model.vars.filter(v=>v.g===g.id&&v.on&&v.imp>0).reduce((a,v)=>a+v.imp*10,0)||1;
-      c.share=c.raw/den*10*w;}}
+  for(const g of active){const w=(Number(model.weights[g.id])||0)/wsum;base+=gs[g.id]*w;
+    for(const c of contrib.filter(c=>c.g===g.id))c.share=c.raw/(dens[g.id]||1)*10*w;}
+  for(const c of contrib)if(c.share==null)c.share=0;
   let pen=0,dq=false;const hits=[];
   for(const n of model.negatives){if(n.on&&lead.neg&&lead.neg[n.id]){pen+=Number(n.pen)||0;if(n.dq)dq=true;hits.push(n)}}
   const final=Math.max(1,Math.min(10,base-pen));
@@ -242,24 +300,29 @@ function compute(){
   let route;
   if(dq)route="dq";
   else if(final>=model.thresholds.sales)route="sales";
-  else if(model.fastTrack.on&&handRaise&&gs.fit>=model.fastTrack.fitMin)route="sales";
+  else if(model.fastTrack.on&&handRaise&&(gs.fit||0)>=model.fastTrack.fitMin)route="sales";
   else if(final>=model.thresholds.nurture)route="nurture";
   else route="hold";
-  const fast=route==="sales"&&final<model.thresholds.sales;
+  let fast=route==="sales"&&final<model.thresholds.sales;
+  const thin=ko&&total&&known/total<0.25;
+  if(thin&&route==="sales"&&!fast)route="nurture";
   contrib.sort((a,b)=>b.share-a.share);
-  return{gs,final,route,fast,hits,top:contrib.filter(c=>c.share>0).slice(0,4)};
+  return{gs,final,route,fast,thin,hits,known,total,top:contrib.filter(c=>c.share>0).slice(0,4)};
 }
 const ROUTE={sales:"Sales CRM",nurture:"Nurture",hold:"Hold",dq:"Disqualified"};
 
 function renderScore(){
   const r=compute();
   $("final").textContent=r.final.toFixed(1);
-  const rc=$("route");rc.className="chip "+r.route;rc.textContent=ROUTE[r.route]+(r.fast?" · fast-track":"");
+  const rc=$("route");rc.className="chip "+r.route;rc.textContent=ROUTE[r.route]+(r.fast?" · fast-track":"")+(r.thin&&r.route==="nurture"?" · needs data":"");
   const s=model.thresholds.sales,n=model.thresholds.nurture;
   const pct=x=>((x-1)/9*100);
   $("gauge").innerHTML=`<span style="width:${pct(n)}%;background:var(--hold);opacity:.55"></span><span style="width:${pct(s)-pct(n)}%;background:var(--nurture);opacity:.7"></span><span style="flex:1;background:var(--sales);opacity:.8"></span>`;
   $("gmark").style.left=pct(r.final)+"%";
-  $("bars").innerHTML=GROUPS.map(g=>`<div class="bar"><span>${g.name}</span><div class="track"><div class="fill" style="width:${r.gs[g.id]*10}%"></div></div><span class="mono">${r.gs[g.id].toFixed(1)}</span></div>`).join("");
+  $("bars").innerHTML=GROUPS.map(g=>{const skip=!(Number(model.weights[g.id])>0);const v=r.gs[g.id];
+    const label=skip?"Skipped":(v==null?"No data":v.toFixed(1));
+    return `<div class="bar"><span>${g.name}</span><div class="track"><div class="fill" style="width:${skip||v==null?0:v*10}%"></div></div><span class="mono${skip||v==null?" muted":""}" style="${skip||v==null?"font-size:.68rem":""}">${label}</span></div>`}).join("");
+  $("known").textContent=`Signals known: ${r.known} of ${r.total}`+(r.total&&r.known/r.total<.3?" · needs more data":"");
   $("drivers").innerHTML=r.top.length?r.top.map(c=>`<li>${esc(c.v.name)}: ${esc(c.v.opts[lead[c.v.id]].l)} <span class="muted mono">+${c.share.toFixed(1)}</span></li>`).join(""):"<li class='muted'>No positive signals yet</li>";
   $("penalty").innerHTML=r.hits.length?`<span style="color:var(--dq);font-weight:600">Deductions:</span> `+r.hits.map(h=>esc(h.name)+(h.dq?" (disqualifies)":" −"+h.pen)).join("; "):"";
   renderRules();
@@ -280,6 +343,7 @@ function renderTabs(){
 
 function renderVars(){
   const box=$("vars");
+  $("gdesc").innerHTML=GDESC[tab]||"";
   if(tab==="neg"){
     box.innerHTML=model.negatives.map(n=>`<div class="var ${n.on?"":"off"}">
       <input type="checkbox" id="non_${n.id}" ${n.on?"checked":""} aria-label="Use ${esc(n.name)}">
@@ -298,12 +362,12 @@ function renderVars(){
   const vs=model.vars.filter(v=>v.g===tab);
   box.innerHTML=vs.map(v=>`<div class="var ${v.on?"":"off"}" id="row_${v.id}">
     <input type="checkbox" id="on_${v.id}" ${v.on?"checked":""} aria-label="Use ${esc(v.name)}">
-    <div style="min-width:0"><div class="vname">${esc(v.name)}</div><div class="vhint">${esc(v.hint)}</div></div>
+    <div style="min-width:0"><div class="vname">${esc(v.name)}</div><div class="vhint">${esc(v.hint)}</div>${SRC[v.id]?`<div class="vsrc">Source: ${esc(SRC[v.id])}</div>`:""}</div>
     <div class="vctrl">
-      <div class="seg" role="group" aria-label="Importance">${[1,2,3].map(i=>`<button id="imp_${v.id}_${i}" aria-pressed="${v.imp===i}" title="Importance ${i}">${i}</button>`).join("")}</div>
+      <div class="impwrap"><span class="implabel">Importance</span><div class="seg" role="group" aria-label="Importance">${[1,2,3].map(i=>`<button id="imp_${v.id}_${i}" aria-pressed="${v.imp===i}" title="Importance: ${["","Low","Med","High"][i]}">${["","Low","Med","High"][i]}</button>`).join("")}</div></div>
       <select id="lead_${v.id}" aria-label="This lead: ${esc(v.name)}"><option value="">This lead: not set</option>${v.opts.map((o,i)=>`<option value="${i}" ${lead[v.id]===i?"selected":""}>${esc(o.l)}</option>`).join("")}</select>
     </div>
-    <details class="pts"><summary>Edit points</summary><div class="pts" style="padding-top:6px">${v.opts.map((o,i)=>`<label for="pt_${v.id}_${i}">${esc(o.l)} <input type="number" id="pt_${v.id}_${i}" min="0" max="10" step="1" value="${o.p}"></label>`).join("")}</div></details>
+    <details class="pts"><summary>Edit points</summary><div class="small muted" style="padding-top:6px;width:100%">What each answer is worth, from 0 to 10. 10 is the best possible answer.</div><div class="pts" style="padding-top:6px">${v.opts.map((o,i)=>`<label for="pt_${v.id}_${i}">${esc(o.l)} <input type="number" id="pt_${v.id}_${i}" min="0" max="10" step="1" value="${o.p}"></label>`).join("")}</div></details>
   </div>`).join("");
   vs.forEach(v=>{
     $("on_"+v.id).addEventListener("change",e=>{v.on=e.target.checked;$("row_"+v.id).classList.toggle("off",!v.on);renderScore()});
@@ -330,6 +394,8 @@ function renderRules(){
   t+=`\nROUTING\n  Score ≥ ${model.thresholds.sales}: send to sales CRM, assign rep, alert\n  Score ${model.thresholds.nurture}–${model.thresholds.sales}: marketing nurture\n  Score < ${model.thresholds.nurture}: hold and recycle\n`;
   if(model.fastTrack.on)t+=`  Fast-track: demo, quote or consult request with Fit ≥ ${model.fastTrack.fitMin} goes to sales\n`;
   t+=`  Any disqualifier: disqualified\n`;
+  t+=`  Blank variables: ${model.knownOnly?"skipped (score only what we know); under 25% of signals known caps the route at nurture":"count as zero"}\n`;
+  GROUPS.forEach(g=>{if(!(Number(model.weights[g.id])>0))t+=`  ${g.name}: skipped\n`});
   GROUPS.forEach(g=>{
     t+=`\n${g.name.toUpperCase()} (group score 0–10 = weighted average)\n`;
     model.vars.filter(v=>v.g===g.id&&v.on).forEach(v=>{t+=`  ${v.name} [importance ${v.imp}]: `+v.opts.map(o=>`${o.l} ${o.p}`).join(" · ")+"\n"});
@@ -345,11 +411,12 @@ $("copyBtn").addEventListener("click",()=>{
 });
 function selectRules(){const r=document.createRange();r.selectNodeContents($("rules"));const s=getSelection();s.removeAllRanges();s.addRange(r);setStatus("Rules selected. Press copy on your keyboard.")}
 
-function renderAll(){$("clientName").value=model.client||"";renderWeights();renderTabs();renderVars();renderThresholds();renderScore()}
+function renderAll(){$("clientName").value=model.client||"";$("knownOnly").checked=!!model.knownOnly;renderWeights();renderTabs();renderVars();renderThresholds();renderScore()}
 
+$("knownOnly").addEventListener("change",e=>{model.knownOnly=e.target.checked;renderScore()});
 $("clearLead").addEventListener("click",()=>{lead={neg:{}};markLead();renderVars();renderScore()});
 
 $("newBtn").addEventListener("click",()=>{model=clone(TEMPLATE);lead=clone(EXAMPLE_LEAD);$("exampleTag").textContent="Example lead";renderAll();setStatus("Example model restored.")});
 $("clientName").addEventListener("input",e=>{model.client=e.target.value;renderRules()});
-renderAll();setStatus("Example model loaded. Try changing the weights or the lead.");
+renderAll();setStatus("Try it: change the weights, turn variables on or off, and test a lead.");
 </script>
